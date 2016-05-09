@@ -1,0 +1,90 @@
+{
+  "data": {
+    "request": {
+      "url": "http://10.82.12.10:4000/getdata/single",
+      "params": {}
+    },
+    "groupby": ["month"],
+    "sortby":[]
+  },
+  "menus": {
+    "pager": {
+      "enable": true,
+      "pager_length":5,
+      "pager_option": [
+        [5, 7, 10, 0],
+        [5, 7, 10, "所有"]
+      ],
+      "current_page": 0
+    },
+    "export":{
+      "enable":true,
+      "buttonname":"导出Excel",
+      "filename":"export"
+    },
+    "freezeheader":{
+      "enable":false
+    }
+  },
+  "style": {
+    "direction": "vertical"
+  },
+  "table": {
+    "header": {
+      "grid": [
+        [{
+          "title": "业务/月份",
+          "colspan": 2,
+          "rowspan": 2
+        }, null, {
+          "title": "易贷",
+          "colspan": 2
+        }, null, {
+          "title": "转赚",
+          "colspan": 2
+        }, null, {
+          "title": "商城",
+          "colspan": 2
+        }, null],
+        [null, null, {
+          "title": "pv"
+        }, {
+          "title": "uv"
+        }, {
+          "title": "pv"
+        }, {
+          "title": "uv"
+        }, {
+          "title": "pv"
+        }, {
+          "title": "uv"
+        }]
+      ],
+      "data_bind": [{"value":"month"},
+        {"value":"week"},
+        {"value":"ydpv"},
+        {"value":"yduv"},
+        {"value":"zzpv"},
+        {"value":"zzuv"},
+        {"value":"mallpv"},
+        {"value":"malluv"}]
+    },
+    "footer": [
+      [{
+        "title": "总计","colspan": 2
+      }, null, {
+        "title": "总计1"
+      }, {
+        "value": "zzpv"
+      }, {
+        "value": "${zzpv}+${zzuv}"
+      }, {
+        "title": "总计4"
+      }, {
+        "title": "总计5"
+      }, {
+        "title": "总计6"
+      }]
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "data": {
+    "request": {
+      "url": "http://10.82.12.10:4000/getdata/simple",
+      "params": {}
+    },
+    "groupby": [],
+    "sortby": [{"field":"pv","order":"desc"}]
+  },
+  "menus": {
+    "pager": {
+      "enable": true,
+      "pager_length": 5,
+      "pager_option": [
+        [5, 7, 10, 0],
+        [5, 7, 10, "所有"]
+      ],
+      "current_page": 0
+    },
+    "freezeheader":{
+      "enable":true
+    }
+  },
+  "style": {
+    "direction": "vertical"
+  },
+  "table": {
+    "header": {
+      "grid": [
+        [{
+          "title": "业务"
+        }, {
+          "title": "pv"
+        }, {
+          "title": "pv2"
+        }, {
+          "title": "uv"
+        }, {
+          "title": "uv2"
+        }, {
+          "title": "xx2"
+        }, {
+          "title": "xx3"
+        }]
+      ],
+      "data_bind": [{"value":"biz"}, {"value":"pv"}, {"value":"pv2"}, {"value":"uv"}, {"value":"uv2"}, {"value":"xx2"}, {"value":"xx3"}]
+    }
+  }
+}

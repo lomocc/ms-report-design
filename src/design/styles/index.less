@@ -1,0 +1,28 @@
+@header-name:headcell;
+@borderColor:#000;
+td, th{
+    border-left: 1px solid @borderColor;
+    border-top: 1px solid @borderColor;
+    word-break: break-all;
+    height: 50px;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+}
+table{
+    //border-collapse: collapse;
+    border-spacing: 0;
+    border-right: 1px solid @borderColor;
+    border-bottom: 1px solid @borderColor;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 6px 6px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.@{header-name}{
+    font-size: 16px;
+    text-align: center;
+    font-weight: bold;
+    background: #f4f4f4;
+}
