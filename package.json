@@ -2,7 +2,7 @@
   "name": "table",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "build": "set NODE_ENV=development && node server.js",
     "publish": "webpack -p",
