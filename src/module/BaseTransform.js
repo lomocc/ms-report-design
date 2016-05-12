@@ -11,9 +11,9 @@ export default class BaseTransform {
 	//the target table container to render
 	constructor(targetdom, config) {
 		this.targetdom = targetdom;
-		let default_config = JSON.parse(JSON.stringify(config_default));
-		this.config = util.mergeObject(default_config, config);
-		console.log(this.config);
+		if(config){
+			this.setConfig(value);
+		}
 	}
 
 	rendererInjector = new Injector();
@@ -574,7 +574,7 @@ export default class BaseTransform {
 				head.appendChild(tr);
 			});
 
-			window.onscroll = function() {
+			this.$bindEventListener("scroll", function() {
 				let scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
 
 				//get HeaderHeight
@@ -583,11 +583,8 @@ export default class BaseTransform {
 				} else {
 					maskTable.style.display = "none";
 				}
-			};
-
-			window.onresize = (function() {
-				this.renderFreezeHeader();
-			}).bind(this);
+			});
+			this.$bindEventListener("resize", ()=>this.renderFreezeHeader());
 
 			maskTable.appendChild(head);
 			maskTable.style.position = "fixed";
@@ -650,5 +647,43 @@ export default class BaseTransform {
 
 	reDraw() {
 		this.generateReport();
+	}
+
+	// events
+	$eventCacheMap = {};
+	$bindEventListener(type, handler){
+		if(this.$eventCacheMap[type] != undefined){
+			console.error("注册了重复的事件，请检查!", type);
+			this.$unBindEventListener(type);
+		}
+		this.$eventCacheMap[type] = handler;
+		window.addEventListener(type, handler);
+	}
+	$unBindEventListener(type){
+		if(this.$eventCacheMap[type] == undefined){
+			console.error("没有找到可以删除事件，请检查!", type);
+			return;
+		}
+		window.removeEventListener(type, this.$eventCacheMap[type]);
+		delete this.$eventCacheMap[type];
+	}
+
+	$unBindAllEventListeners() {
+		for (var type in this.$eventCacheMap)this.$unBindEventListener(type);
+	}
+
+	// api
+	setConfig(value) {
+		let default_config = JSON.parse(JSON.stringify(config_default));
+		this.config = util.mergeObject(default_config, config);
+		console.log(this.config);
+	}
+
+	// clear cache & memory & event listeners
+	dispose() {
+		this.$unBindAllEventListeners();
+		DisplayUtil.removeChild(this.targetdom);
+		this.targetdom = null;
+		this.config = null;
 	}
 }

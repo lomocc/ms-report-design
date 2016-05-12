@@ -63,11 +63,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
 	var _BaseTransform = __webpack_require__(2);
 
 	var _BaseTransform2 = _interopRequireDefault(_BaseTransform);
-
-	__webpack_require__(4);
 
 	var _ItemRender = __webpack_require__(8);
 
@@ -89,37 +91,30 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _ItemParser2 = _interopRequireDefault(_ItemParser);
 
-	var _SUMParser = __webpack_require__(15);
+	var _StringParser = __webpack_require__(15);
+
+	var _StringParser2 = _interopRequireDefault(_StringParser);
+
+	var _SUMParser = __webpack_require__(16);
 
 	var _SUMParser2 = _interopRequireDefault(_SUMParser);
 
-	__webpack_require__(17);
+	__webpack_require__(18);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var initBaseTransform = function initBaseTransform() {
-	    var baseUrl = "http://10.82.12.10:4000/";
-	    //baseUrl = "/";
-	    fetch(baseUrl + 'getconfig/double').then(function (response) {
-	        return response.json();
-	    }).then(function (data) {
-	        var bf = new _BaseTransform2.default(document.getElementById("tableContainer"), data);
-	        // parser
-	        bf.mapParser(_ItemParser2.default); // default
-	        // multi parser
-	        bf.mapMultiParser(_SUMParser2.default); // default
-	        // renderer
-	        bf.mapRenderer(_ItemRender2.default); // default
-	        bf.mapRenderer(_AnchorRender2.default, "anchor");
-	        bf.mapRenderer(_CurrencyRender2.default, "currency");
-	        bf.mapRenderer(_ProgressRender2.default, "progress");
-
-	        bf.generateReport();
-	        console.log(bf);
-	    });
-	};
-
-	initBaseTransform();
+	exports.default = {
+	    BaseTransform: _BaseTransform2.default,
+	    ItemParser: _ItemParser2.default,
+	    StringParser: _StringParser2.default,
+	    SUMParser: _SUMParser2.default,
+	    ItemRender: _ItemRender2.default,
+	    AnchorRender: _AnchorRender2.default,
+	    CurrencyRender: _CurrencyRender2.default,
+	    ProgressRender: _ProgressRender2.default
+	}; /**
+	    * Created by vincent on 2016/5/10.
+	    */
 
 /***/ },
 /* 2 */
@@ -167,11 +162,12 @@ return /******/ (function(modules) { // webpackBootstrap
 			this.rendererInjector = new _Injector2.default();
 			this.parserInjector = new _Injector2.default();
 			this.multiParserInjector = new _Injector2.default();
+			this.$eventCacheMap = {};
 
 			this.targetdom = targetdom;
-			var default_config = JSON.parse(JSON.stringify(_config_default2.default));
-			this.config = _Util2.default.mergeObject(default_config, config);
-			console.log(this.config);
+			if (config) {
+				this.setConfig(value);
+			}
 		}
 
 		_createClass(BaseTransform, [{
@@ -762,7 +758,7 @@ return /******/ (function(modules) { // webpackBootstrap
 							head.appendChild(tr);
 						});
 
-						window.onscroll = function () {
+						_this6.$bindEventListener("scroll", function () {
 							var scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
 
 							//get HeaderHeight
@@ -771,11 +767,10 @@ return /******/ (function(modules) { // webpackBootstrap
 							} else {
 								maskTable.style.display = "none";
 							}
-						};
-
-						window.onresize = function () {
-							this.renderFreezeHeader();
-						}.bind(_this6);
+						});
+						_this6.$bindEventListener("resize", function () {
+							return _this6.renderFreezeHeader();
+						});
 
 						maskTable.appendChild(head);
 						maskTable.style.position = "fixed";
@@ -845,6 +840,57 @@ return /******/ (function(modules) { // webpackBootstrap
 			key: "reDraw",
 			value: function reDraw() {
 				this.generateReport();
+			}
+
+			// events
+
+		}, {
+			key: "$bindEventListener",
+			value: function $bindEventListener(type, handler) {
+				if (this.$eventCacheMap[type] != undefined) {
+					console.error("注册了重复的事件，请检查!", type);
+					this.$unBindEventListener(type);
+				}
+				this.$eventCacheMap[type] = handler;
+				window.addEventListener(type, handler);
+			}
+		}, {
+			key: "$unBindEventListener",
+			value: function $unBindEventListener(type) {
+				if (this.$eventCacheMap[type] == undefined) {
+					console.error("没有找到可以删除事件，请检查!", type);
+					return;
+				}
+				window.removeEventListener(type, this.$eventCacheMap[type]);
+				delete this.$eventCacheMap[type];
+			}
+		}, {
+			key: "$unBindAllEventListeners",
+			value: function $unBindAllEventListeners() {
+				for (var type in this.$eventCacheMap) {
+					this.$unBindEventListener(type);
+				}
+			}
+
+			// api
+
+		}, {
+			key: "setConfig",
+			value: function setConfig(value) {
+				var default_config = JSON.parse(JSON.stringify(_config_default2.default));
+				this.config = _Util2.default.mergeObject(default_config, config);
+				console.log(this.config);
+			}
+
+			// clear cache & memory & event listeners
+
+		}, {
+			key: "dispose",
+			value: function dispose() {
+				this.$unBindAllEventListeners();
+				_DisplayUtil2.default.removeChild(this.targetdom);
+				this.targetdom = null;
+				this.config = null;
 			}
 		}]);
 
@@ -2017,7 +2063,68 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-	var _ParserContainer2 = __webpack_require__(16);
+	var _ParserObject2 = __webpack_require__(14);
+
+	var _ParserObject3 = _interopRequireDefault(_ParserObject2);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * 根据单条数据和表达式计算结果
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+
+
+	var _class = function (_ParserObject) {
+	    _inherits(_class, _ParserObject);
+
+	    function _class() {
+	        _classCallCheck(this, _class);
+
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(_class).apply(this, arguments));
+	    }
+
+	    _createClass(_class, [{
+	        key: 'parse',
+	        value: function parse(context) {
+	            _get(Object.getPrototypeOf(_class.prototype), 'parse', this).call(this, context);
+
+	            var expression = this.expression;
+	            if (/\$\{(\w+)\}/.test(expression)) {
+	                expression = expression.replace(/\$\{(\w+)\}/g, function (m, p) {
+	                    return context[p] || 0;
+	                });
+	                return expression;
+	            } else if (context && context.hasOwnProperty(expression)) {
+	                return context[expression];
+	            }
+	            return expression;
+	        }
+	    }]);
+
+	    return _class;
+	}(_ParserObject3.default);
+
+	exports.default = _class;
+
+/***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+	var _ParserContainer2 = __webpack_require__(17);
 
 	var _ParserContainer3 = _interopRequireDefault(_ParserContainer2);
 
@@ -2062,7 +2169,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = _class;
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2107,16 +2214,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.default = _class;
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
 	// load the styles
-	var content = __webpack_require__(18);
+	var content = __webpack_require__(19);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(20)(content, {});
+	var update = __webpack_require__(21)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -2133,10 +2240,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(19)();
+	exports = module.exports = __webpack_require__(20)();
 	// imports
 
 
@@ -2147,7 +2254,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/*
@@ -2203,7 +2310,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
