@@ -5,13 +5,14 @@ if (process.env.NODE_ENV == undefined)
     process.env.NODE_ENV = 'production';
 var config = {
     entry: [
-        path.resolve("node_modules/babel-polyfill/lib/index.js"),
+        // path.resolve("node_modules/babel-polyfill/lib/index.js"),
         path.resolve("src/entry.js")
     ],
     output: {
         path: path.resolve("build"),
         filename: "[name].js",
-        chunkFilename: "chunk.[name].js"
+        chunkFilename: "chunk.[name].js",
+		libraryTarget:"umd"
     },
     plugins: [
         new webpack.DefinePlugin({
@@ -33,7 +34,7 @@ var config = {
             exclude: /node_modules/,
             loader: 'babel',
             query: {
-                presets: ['es2015', 'stage-0', 'stage-1', 'stage-2', 'stage-3']
+                presets: ['es2015', 'stage-0']
             }
         }, {
             test: /\.(png|jpeg|jpg|gif)$/,

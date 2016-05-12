@@ -1,8 +1,8 @@
 {
-  "name": "table",
+  "name": "ms-report-table",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
+  "main": "build/main.js",
   "scripts": {
     "build": "set NODE_ENV=development && node server.js",
     "publish": "webpack -p",
