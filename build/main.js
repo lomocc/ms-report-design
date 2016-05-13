@@ -878,7 +878,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			key: "setConfig",
 			value: function setConfig(value) {
 				var default_config = JSON.parse(JSON.stringify(_config_default2.default));
-				this.config = _Util2.default.mergeObject(default_config, config);
+				this.config = _Util2.default.mergeObject(default_config, value);
 				console.log(this.config);
 			}
 

@@ -6,7 +6,7 @@ if (process.env.NODE_ENV == undefined)
 var config = {
     entry: [
         // path.resolve("node_modules/babel-polyfill/lib/index.js"),
-        path.resolve("src/entry.js")
+        path.resolve("src/index.js")
     ],
     output: {
         path: path.resolve("build"),

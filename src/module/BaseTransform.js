@@ -675,7 +675,7 @@ export default class BaseTransform {
 	// api
 	setConfig(value) {
 		let default_config = JSON.parse(JSON.stringify(config_default));
-		this.config = util.mergeObject(default_config, config);
+		this.config = util.mergeObject(default_config, value);
 		console.log(this.config);
 	}
 
