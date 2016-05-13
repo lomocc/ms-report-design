@@ -1,0 +1,161 @@
+{
+  "data": {
+    "request": {
+      "url": "./src/config/operationWeeklyReport-response.json",
+      "params": {}
+    },
+    "groupby": [
+      "month"
+    ],
+    "sortby": []
+  },
+  "menus": {
+    "pager": {
+      "enable": true,
+      "pager_length": 5,
+      "pager_option": [
+        [
+          5,
+          7,
+          10,
+          0
+        ],
+        [
+          5,
+          7,
+          10,
+          "所有"
+        ]
+      ],
+      "current_page": 0
+    },
+    "export": {
+      "enable": true,
+      "buttonname": "导出Excel",
+      "filename": "export"
+    },
+    "freezeheader": {
+      "enable": false
+    }
+  },
+  "style": {
+    "direction": "vertical"
+  },
+  "table": {
+    "header": {
+      "grid": [
+        [
+          {
+            "title": "绩效口径周报",
+            "rowspan": 2
+          },
+          {
+            "title": "${year}年度",
+            "colspan": 4
+          },
+          null,
+          null,
+          null,
+          {
+            "title": "${year}年${month}月第四周分平台",
+            "colspan": 4
+          },
+          null,
+          null,
+          null,
+          {
+            "title": "${year}年绩效进度（按增量计算）",
+            "colspan": 3
+          },
+          null,
+          null,
+          {
+            "title": "上线至今进度累计",
+            "rowspan": 2
+          }
+        ],
+        [
+          null,
+          {
+            "title": "累计"
+          },
+          {
+            "title": "本月累计"
+          },
+          {
+            "title": "本周小计"
+          },
+          {
+            "title": "环周增长"
+          },
+          {
+            "title": "易贷"
+          },
+          {
+            "title": "齐妙"
+          },
+          {
+            "title": "转赚"
+          },
+          {
+            "title": "财神客栈"
+          },
+          {
+            "title": "时间进度"
+          },
+          {
+            "title": "绩效进度"
+          },
+          {
+            "title": "年度目标"
+          },
+          null
+        ]
+      ],
+      "data_bind": [
+        {
+          "value": "line_name"
+        },
+        {
+          "value": "year_total"
+        },
+        {
+          "value": "month_total"
+        },
+        {
+          "value": "week_total"
+        },
+        {
+          "value": "huan_zhou"
+        },
+        {
+          "value": "w_yidai"
+        },
+        {
+          "value": "w_qimiao"
+        },
+        {
+          "value": "w_zz"
+        },
+        {
+          "value": "w_cs"
+        },
+        {
+          "value": "time_jindu"
+        },
+        {
+          "value": "jixiao_jindu"
+        },
+        {
+          "value": "year_target"
+        },
+        {
+          "value": "total"
+        }
+      ]
+    }
+  }
+}
+
+
+

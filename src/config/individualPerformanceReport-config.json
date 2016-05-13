@@ -1,0 +1,378 @@
+{
+  "data": {
+    "request": {
+      "url": "./src/config/individualPerformanceReport-response.json",
+      "params": {}
+    },
+    "groupby": [
+      "month"
+    ],
+    "sortby": []
+  },
+  "menus": {
+    "pager": {
+      "enable": true,
+      "pager_length": 5,
+      "pager_option": [
+        [
+          5,
+          7,
+          10,
+          0
+        ],
+        [
+          5,
+          7,
+          10,
+          "所有"
+        ]
+      ],
+      "current_page": 0
+    },
+    "export": {
+      "enable": true,
+      "buttonname": "导出Excel",
+      "filename": "export"
+    },
+    "freezeheader": {
+      "enable": false
+    }
+  },
+  "style": {
+    "direction": "vertical"
+  },
+  "table": {
+    "header": {
+      "grid": [
+        [
+          {
+            "title": "项目信息",
+            "colspan": 4
+          },
+          null,
+          null,
+          null,
+          {
+            "title": "绩效",
+            "colspan": 11
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "title": "费用",
+            "colspan": 17
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          {
+            "title": "业务经办人",
+            "rowspan": 2
+          },
+          {
+            "title": "项目名称",
+            "rowspan": 2
+          },
+          {
+            "title": "分属",
+            "rowspan": 2
+          },
+          {
+            "title": "项目规模",
+            "rowspan": 2
+          },
+          {
+            "title": "项目创利",
+            "rowspan": 2
+          },
+          {
+            "title": "个人权重",
+            "rowspan": 2
+          },
+          {
+            "title": "承揽承做权重",
+            "rowspan": 2
+          },
+          {
+            "title": "个人绩效规模",
+            "rowspan": 2
+          },
+          {
+            "title": "个人绩效创利",
+            "rowspan": 2
+          },
+          {
+            "title": "季度创利",
+            "colspan": 4
+          },
+          null,
+          null,
+          null,
+          {
+            "title": "本年小计",
+            "rowspan": 2
+          },
+          {
+            "title": "待结转创利",
+            "rowspan": 2
+          },
+          {
+            "title": "团队费用池",
+            "rowspan": 2
+          },
+          {
+            "title": "个人费用额度",
+            "rowspan": 2
+          },
+          {
+            "title": "匡算费用额度",
+            "colspan": 4
+          },
+          null,
+          null,
+          null,
+          {
+            "title": "截止本季度平台服务费回款",
+            "colspan": 4
+          },
+          null,
+          null,
+          null,
+          {
+            "title": "最终可使用费用额度",
+            "colspan": 4
+          },
+          null,
+          null,
+          null,
+          {
+            "title": "小计",
+            "rowspan": 2
+          },
+          {
+            "title": "本年已报销金额",
+            "rowspan": 2
+          },
+          {
+            "title": "本年未使用额度",
+            "rowspan": 2
+          }
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          {
+            "title": "1季度"
+          },
+          {
+            "title": "2季度"
+          },
+          {
+            "title": "3季度"
+          },
+          {
+            "title": "4季度"
+          },
+          null,
+          null,
+          null,
+          null,
+          {
+            "title": "1季度"
+          },
+          {
+            "title": "2季度"
+          },
+          {
+            "title": "3季度"
+          },
+          {
+            "title": "4季度"
+          },
+          {
+            "title": "1季度"
+          },
+          {
+            "title": "2季度"
+          },
+          {
+            "title": "3季度"
+          },
+          {
+            "title": "4季度"
+          },
+          {
+            "title": "1季度"
+          },
+          {
+            "title": "2季度"
+          },
+          {
+            "title": "3季度"
+          },
+          {
+            "title": "4季度"
+          },
+          null,
+          null,
+          null
+        ]
+      ],
+      "data_bind": [
+        {
+          "value": "agent_name"
+        },
+        {
+          "value": "project_name"
+        },
+        {
+          "value": "platform"
+        },
+        {
+          "value": "project_size",
+          "render": "currency"
+        },
+        {
+          "value": "project_profit",
+          "render": "currency"
+        },
+        {
+          "value": "person_weight"
+        },
+        {
+          "value": "undertake_weight"
+        },
+        {
+          "value": "${project_size}*${person_weight}",
+          "render": "currency"
+        },
+        {
+          "value": "${project_profit}*${person_weight}*${undertake_weight}",
+          "render": "currency"
+        },
+        {
+          "render": "currency",
+          "value": "first_quarter_profit"
+        },
+        {
+          "render": "currency",
+          "value": "second_quarter_profit"
+        },
+        {
+          "render": "currency",
+          "value": "third_quarter_profit"
+        },
+        {
+          "render": "currency",
+          "value": "fourth_quarter_profit"
+        },
+        {
+          "render": "currency",
+          "value": "year_total_profit"
+        },
+        {
+          "render": "currency",
+          "value": "wait_forward_profit"
+        },
+        {
+          "render": "currency",
+          "value": "team_cost_pool"
+        },
+        {
+          "render": "currency",
+          "value": "person_cost_lines"
+        },
+        {
+          "render": "currency",
+          "value": "first_quarter_density"
+        },
+        {
+          "render": "currency",
+          "value": "second_quarter_density"
+        },
+        {
+          "render": "currency",
+          "value": "third_quarter_density"
+        },
+        {
+          "render": "currency",
+          "value": "fourth_quarter_density"
+        },
+        {
+          "render": "currency",
+          "value": "${first_quarter_service}*(1-${team_for})*${person_weight}*${undertake_weight}"
+        },
+        {
+          "render": "currency",
+          "value": "${second_quarter_service}*(1-${team_for})*${person_weight}*${undertake_weight}"
+        },
+        {
+          "render": "currency",
+          "value": "${third_quarter_service}*(1-${team_for})*${person_weight}*${undertake_weight}"
+        },
+        {
+          "render": "currency",
+          "value": "${fourth_quarter_service}*(1-${team_for})*${person_weight}*${undertake_weight}"
+        },
+        {
+          "render": "currency",
+          "value": "Math.min(${first_quarter_density}, ${first_quarter_service_result})"
+        },
+        {
+          "render": "currency",
+          "value": "Math.min(${second_quarter_density}, ${second_quarter_service_result})"
+        },
+        {
+          "render": "currency",
+          "value": "Math.min(${third_quarter_density}, ${third_quarter_service_result})"
+        },
+        {
+          "render": "currency",
+          "value": "Math.min(${fourth_quarter_density}, ${fourth_quarter_service_result})"
+        },
+        {
+          "render": "currency",
+          "value": "${first_quarter_min}+${second_quarter_min}+${third_quarter_min}+${fourth_quarter_min}"
+        },
+        {
+          "render": "currency",
+          "value": "refund_total"
+        },
+        {
+          "render": "currency",
+          "value": "remain_total"
+        }
+      ]
+    }
+  }
+}
