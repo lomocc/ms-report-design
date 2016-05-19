@@ -12,7 +12,7 @@ export default class BaseTransform {
 	constructor(targetdom, config) {
 		this.targetdom = targetdom;
 		if(config){
-			this.setConfig(value);
+			this.setConfig(config);
 		}
 	}
 
@@ -78,7 +78,6 @@ export default class BaseTransform {
 				tabledata.reverse();
 			}
 		});
-		console.log("table data:", tabledata);
 
 
 		let arrT = [];
@@ -201,45 +200,77 @@ export default class BaseTransform {
 		let head = generateEle("thead");
 		let body = generateEle("tbody");
 		let foot = generateEle("tfoot");
+
+		var dataSheet = {};//for export
+		dataSheet.content = [];
+		dataSheet.merge = [];
 		//generate head
-		headergrid.map((row) => {
+		headergrid.map((row,rowindex) => {
 			let tr = generateEle("tr");
-			row.map((cell) => {
+			let datasheetrow = [];
+			row.map((cell,colindex) => {
 				if (cell) {
 					let th = generateEle("th");
 					// th.innerHTML = cell.value;
 					DisplayUtil.appendChild(th, this.parseValue(globaldata, "string", cell.title));
-					th.colSpan = cell.colspan || "1";
-					th.rowSpan = cell.rowspan || "1";
+					let colspan = parseInt(cell.colspan || 1);
+					let rowspan = parseInt(cell.rowspan || 1);
+					th.colSpan = colspan;
+					th.rowSpan = rowspan;
 					th.className = "headcell";
 					tr.appendChild(th);
+
+					datasheetrow.push(th.innerHTML);
+					if(colspan >1 || rowspan>1){
+						let merge = {};
+						merge.start = parseInt(rowindex + 1) + ":" + parseInt(colindex+1);
+						merge.end = parseInt(rowindex + rowspan) + ":" + parseInt(colindex+colspan);
+						dataSheet.merge.push(merge);
+					}
+				}else {
+					datasheetrow.push("");
 				}
 			});
+			dataSheet.content.push(datasheetrow);
 			head.appendChild(tr);
 		});
 		const column = headergrid.slice(-1);
 		//generate body
-		arrTableData.map((row) => {
+		arrTableData.map((row,rowindex) => {
 			let tr = generateEle("tr");
-			row.map((cell, i) => {
-				//console.log(i);
+			let datasheetrow = [];
+			row.map((cell, colindex) => {
 				if (cell) {
 					let td = generateEle("td");
-					td.colSpan = cell.colspan || "1";
-					td.rowSpan = cell.rowspan || "1";
+					let colspan = parseInt(cell.colspan || 1);
+					let rowspan = parseInt(cell.rowspan || 1);
+					td.colSpan = colspan;
+					td.rowSpan = rowspan;
 					td.className = "bodycell";
 					DisplayUtil.appendChild(td,
-						this.renderValue(cell.value, column[i] ? column[i].render : "")
+						this.renderValue(cell.value, column[colindex] ? column[colindex].render : "")
 					);
 					tr.appendChild(td);
+
+					datasheetrow.push(td.innerHTML);
+					if(colspan >1 || rowspan>1){
+						let merge = {};
+						merge.start = parseInt(headergrid.length + rowindex + 1) + ":" + parseInt(colindex+1);
+						merge.end = parseInt(headergrid.length + rowindex + rowspan) + ":" + parseInt(colindex+colspan);
+						dataSheet.merge.push(merge);
+					}
+				}else {
+					datasheetrow.push("");
 				}
 			});
+			dataSheet.content.push(datasheetrow);
 			body.appendChild(tr);
 		});
 		//generate foot
-		footgrid.map((row) => {
+		footgrid.map((row,rowindex) => {
 			let tr = generateEle("tr");
-			row.map((cell) => {
+			let datasheetrow = [];
+			row.map((cell,colindex) => {
 				if (cell) {
 					let td = generateEle("td");
 					if (cell.title) {
@@ -248,22 +279,38 @@ export default class BaseTransform {
 						DisplayUtil.appendChild(td, this.parseMultiValue(tabledata, cell.parser, cell.value, cell.params));
 					}
 					td.className = "footcell";
-					td.colSpan = cell.colspan || "1";
-					td.rowSpan = cell.rowspan || "1";
+					let colspan = parseInt(cell.colspan || 1);
+					let rowspan = parseInt(cell.rowspan || 1);
+					td.colSpan = colspan;
+					td.rowSpan = rowspan;
 					tr.appendChild(td);
+
+					datasheetrow.push(td.innerHTML);
+					if(colspan >1 || rowspan>1){
+						let merge = {};
+						merge.start = parseInt(headergrid.length + arrTableData.length + rowindex + 1) + ":" + parseInt(colindex+1);
+						merge.end = parseInt(headergrid.length + arrTableData.length + rowindex + rowspan) + ":" + parseInt(colindex+colspan);
+						dataSheet.merge.push(merge);
+					}
+				}else {
+					datasheetrow.push("");
 				}
 
 			});
+			dataSheet.content.push(datasheetrow);
 			foot.appendChild(tr);
 		});
 		table.appendChild(head);
 		table.appendChild(body);
 		table.appendChild(foot);
 
+		console.log("sheet:",dataSheet);
+		this.exportsheet = dataSheet;
+
 		return table;
 	}
 
-	getHorizontalTable(headergrid, footgrid, arrTableData, table, tabledata) {
+	getHorizontalTable(headergrid, footgrid, arrTableData, table, tabledata, globaldata) {
 		let config = this.config;
 		let headLength = config.data.groupby.length + 1; //表头高度
 		let rowLength = config.table.header.data_bind.length; //列数即横向扩展行数
@@ -271,45 +318,75 @@ export default class BaseTransform {
 		let head = generateEle("thead");
 		let body = generateEle("tbody");
 		let index_head = 0;
+
+		var dataSheet = {};//for export
+		dataSheet.content = [];
+		dataSheet.merge = [];
+
 		for (let i = 0; i < rowLength; i++) {
 			let tr = generateEle("tr");
-			headergrid.map((node) => {
+			let datasheetrow = [];
+			headergrid.map((node,colindex) => {
 				let cell = node[i];
 				if (cell) {
 					var td = generateEle("td");
-					td.rowSpan = cell.colspan || "1";
-					td.colSpan = cell.rowspan || "1";
+					let colspan = parseInt(cell.rowspan || 1);
+					let rowspan = parseInt(cell.colspan || 1);
+					td.colSpan = colspan;
+					td.rowSpan = rowspan;
 					td.className = "headcell";
 					DisplayUtil.appendChild(td, this.parseValue(globaldata, "string", cell.title));
 					tr.appendChild(td);
+					datasheetrow.push(td.innerHTML);
+					if(colspan >1 || rowspan>1){
+						let merge = {};
+						merge.start = parseInt(i + 1) + ":" + parseInt(colindex+1);
+						merge.end = parseInt(i + rowspan) + ":" + parseInt(colindex+colspan);
+						dataSheet.merge.push(merge);
+					}
+				}else {
+					datasheetrow.push("");
 				}
 			});
 
 			const column = headergrid.slice(-1);
-			arrTableData.map((node) => {
+			arrTableData.map((node,colindex) => {
 				let cell = node[i];
 				if (cell) {
-					console.log(cell);
 					let td = generateEle("td");
 					// td.innerHTML = cell.value;
 					DisplayUtil.appendChild(td,
 						this.renderValue(cell.value, column[i] ? column[i].render : "")
 					);
 					//DisplayUtil.appendChild(td, cell.value);
-					td.colSpan = cell.rowspan || "1";
-					td.rowSpan = cell.colspan || "1";
+					let colspan = parseInt(cell.rowspan || 1);
+					let rowspan = parseInt(cell.colspan || 1);
+					td.colSpan = colspan;
+					td.rowSpan = rowspan;
 					td.className = "bodycell";
 					tr.appendChild(td);
+
+					datasheetrow.push(td.innerHTML);
+					if(colspan >1 || rowspan>1){
+						let merge = {};
+						merge.start = parseInt(i + 1) + ":" + parseInt(headergrid.length+colindex+1);
+						merge.end = parseInt(i + rowspan) + ":" + parseInt(headergrid.length+colindex+colspan);
+						dataSheet.merge.push(merge);
+					}
+				}else {
+					datasheetrow.push("");
 				}
 			});
 
 			//transform foot
-			footgrid.map((node) => {
+			footgrid.map((node,colindex) => {
 				let cell = node[i];
 				if (cell) {
 					let td = generateEle("td");
-					td.rowSpan = cell.colspan || "1";
-					td.colSpan = cell.rowspan || "1";
+					let colspan = parseInt(cell.rowspan || 1);
+					let rowspan = parseInt(cell.colspan || 1);
+					td.colSpan = colspan;
+					td.rowSpan = rowspan;
 					td.className = "footcell";
 					// td.innerHTML = cell.value || "";
 					if (cell.title) {
@@ -319,6 +396,16 @@ export default class BaseTransform {
 					}
 					//DisplayUtil.appendChild(td, cell.value || "");
 					tr.appendChild(td);
+
+					datasheetrow.push(td.innerHTML);
+					if(colspan >1 || rowspan>1){
+						let merge = {};
+						merge.start = parseInt(i + 1) + ":" + parseInt(headergrid.length+arrTableData.length+colindex+1);
+						merge.end = parseInt(i + rowspan) + ":" + parseInt(headergrid.length+arrTableData+colindex+colspan);
+						dataSheet.merge.push(merge);
+					}
+				}else {
+					datasheetrow.push("");
 				}
 			});
 
@@ -328,9 +415,13 @@ export default class BaseTransform {
 			} else {
 				body.appendChild(tr);
 			}
+
+			dataSheet.content.push(datasheetrow);
 		}
 		table.appendChild(head);
 		table.appendChild(body);
+		console.log("sheet:",dataSheet);
+		this.exportsheet = dataSheet;
 		return table;
 	}
 
@@ -341,7 +432,6 @@ export default class BaseTransform {
 
 		let tabledata = config.data.response.data;
 		let length_data = config.menus.pager.pager_length || 0; //页长为空或零则显示所有数据
-		//to-do 考虑服务器端分页还是本地分页
 		if (config.menus.pager.enable && length_data != 0) {
 			let currentPage = config.menus.pager.current_page;
 			let start = currentPage * length_data;
@@ -356,7 +446,7 @@ export default class BaseTransform {
 		let direction = config.style.direction;
 
 		let ele_table = this.generateEle("table");
-
+		//direction = "x";
 		ele_table = direction === "vertical" ? this.getVerticalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata) : this.getHorizontalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata);
 
 		ele_table.setAttribute("dt-id", "table");
@@ -418,9 +508,20 @@ export default class BaseTransform {
 				let filename = menuconfig.export.filename;
 				btn_export.onclick = (function() {
 					//console.log(params);
-					let params = {
+					/*let params = {
 						"dom": this.dom.table.innerHTML,
 						"filename": filename
+					};*/
+					var exporttable = {
+						type:"table",
+						data:this.exportsheet.content
+					};
+					if(this.exportsheet.merge.length>0){
+						exporttable.merge = this.exportsheet.merge;
+					}
+					var params = {
+						"filename": "test",
+						"content": JSON.stringify([exporttable])
 					};
 					let form = generateEle("form");
 					form.action = this.config.menus.export.export_url;
@@ -517,20 +618,23 @@ export default class BaseTransform {
 
 		} else {
 			let targetnode = this.getTargetNodeById("paginationbar");
-			this.targetdom.removeChild(targetnode);
+			if(targetnode){
+				this.targetdom.removeChild(targetnode);
+			}
+
 		}
 	}
 
 
 
 	renderFreezeHeader() {
-		if (document.getElementById("maskTable")) {
+		/*if (document.getElementById("maskTable")) {
 			document.body.removeChild(document.getElementById("maskTable"));
-		}
+		}*/
 		if (this.config.menus.freezeheader.enable) {
 			let arrWidth = [];
 			let arrTargetDom = this.targetdom.childNodes;
-			let arrTargetKeys = Object.keys(arrTargetDom);
+			//let arrTargetKeys = Object.keys(arrTargetDom);
 			let targetTable = this.getTargetNodeById("table");
 
 			let tableWidth = targetTable.offsetWidth;
@@ -593,9 +697,17 @@ export default class BaseTransform {
 			maskTable.style.zIndex = "10000";
 			maskTable.style.backgroundColor = "white";
 			maskTable.style.width = tableWidth + "px";
-			maskTable.id = "maskTable";
+			//maskTable.id = "maskTable";
 			maskTable.style.display = "none";
-			document.body.appendChild(maskTable);
+			//document.body.appendChild(maskTable);
+			if(!this.maskTable){
+				this.maskTable = maskTable;
+				document.body.appendChild(this.maskTable);
+			}else {
+				document.body.replaceChild(this.maskTable, maskTable);
+				this.maskTable = maskTable;
+			}
+
 		}
 	}
 

@@ -24,7 +24,7 @@
       "enable":true,
       "buttonname":"导出Excel",
       "filename":"export",
-      "export_url":"http://10.82.12.10:4000/exportexcel/"
+      "export_url":"http://10.82.12.10:808/exportexcel/Report.php"
     },
     "freezeheader":{
       "enable":false,
