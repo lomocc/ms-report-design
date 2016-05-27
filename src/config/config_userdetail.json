@@ -1,0 +1,76 @@
+{
+  "data": {
+    "request": {
+      "url": "http://10.82.12.10:3000/table/usertrend",
+      "params": {}
+    },
+    "sortby": [{
+      "field": "amount",
+      "order": "asc"
+    }]
+  },
+  "menus": {
+    "pager": {
+      "enable": true,
+      "pager_length": 10,
+      "pager_option": [
+        [10, 30, 50, 100],
+        [10, 30, 50, 100]
+      ],
+      "current_page": 0
+    },
+    "export": {
+      "enable": false
+    }
+  },
+  "style": {
+    "direction": "vertical"
+  },
+  "table": {
+    "header": {
+      "grid": [
+        [{
+          "title": "用户ID"
+        }, {
+          "title": "姓名"
+        }, {
+          "title": "投资时间"
+        }, {
+          "title": "平台"
+        }, {
+          "title": "渠道"
+        }, {
+          "title": "终端"
+        }, {
+          "title": "投资金额",
+          "sort": "amount"
+        }, {
+          "title": "投资金额"
+        }, {
+          "title": "投资利息"
+        }]
+      ],
+      "data_bind": [{
+        "value": "userid"
+      }, {
+        "value": "name"
+      }, {
+        "value": "date"
+      }, {
+        "value": "platform"
+      }, {
+        "value": "channel"
+      }, {
+        "value": "terminal"
+      }, {
+        "value": "amount"
+      }, {
+        "value": "amount",
+        "render": "progress",
+        "renderParams": "100000"
+      }, {
+        "value": "interest"
+      }]
+    }
+  }
+}

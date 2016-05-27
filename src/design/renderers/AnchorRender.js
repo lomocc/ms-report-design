@@ -3,11 +3,13 @@
  */
 import ItemRender from './ItemRender'
 export default class extends ItemRender {
-    createElement(){
+    createElement() {
         return document.createElement("a");
     }
     render() {
         this.element.innerText = this.data;
-        this.element.href = location.href + "#" + this.data;
+        if (this.params) {
+            this.element.href = this.params[0];
+        }
     }
 }

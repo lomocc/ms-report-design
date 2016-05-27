@@ -5,13 +5,18 @@ export default class extends ItemRender {
         var container = document.createElement("div");
         this.progress = document.createElement("div");
         this.progress.style.background = "#f90";
+        container.style.width = "100%";
         container.appendChild(this.progress);
         return container;
     }
     render() {
-        this.element.style.width = "100%";
-        var value = this.data / 10;
+        super.render();
         this.progress.innerText = this.data;
-        this.progress.style.width = value * 100 + "%";
+        if (this.params) {
+            var value = this.data / this.params[0];
+            if(value > 1)
+                value = 1;
+            this.progress.style.width = value * 100 + "%";
+        }
     }
 }

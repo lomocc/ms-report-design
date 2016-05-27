@@ -2,7 +2,7 @@ import Table from './renderers/Table'
 import SUMParser from './parsers/SUMParser'
 import ItemParser from './parsers/ItemParser'
 import './styles/index.css';
-import ExcelUtil from './utils/ExcelUtil'
+// import ExcelUtil from './utils/ExcelUtil'
 
 console.log('%c %s %s 1', 'background: #000; color: #fff;', process.env.NODE_ENV, process.env.VERSION);
 var columns = [

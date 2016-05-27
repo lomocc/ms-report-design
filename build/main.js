@@ -166,7 +166,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 			this.targetdom = targetdom;
 			if (config) {
-				this.setConfig(value);
+				this.setConfig(config);
 			}
 		}
 
@@ -193,11 +193,27 @@ return /******/ (function(modules) { // webpackBootstrap
 			}
 		}, {
 			key: "renderValue",
-			value: function renderValue(value, type) {
+			value: function renderValue(value, renderParams, dataBind) {
+				var type = dataBind ? dataBind.render || dataBind.renderer : "default";
 				var RendererClass = this.rendererInjector.retrieve(type) || this.rendererInjector.retrieve("default");
 				var renderer = new RendererClass();
 				renderer.data = value;
+				renderer.params = renderParams;
 				return renderer.element;
+			}
+		}, {
+			key: "parseParams",
+			value: function parseParams(context, paramsExpStr) {
+				var _this = this;
+
+				if (paramsExpStr) {
+					var paramsExp = paramsExpStr.split(",");
+					return paramsExp.map(function (expression) {
+						if (expression != '') {
+							return _this.parseValue(context, "string", expression);
+						}
+					});
+				}
 			}
 		}, {
 			key: "parseValue",
@@ -227,7 +243,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: "handleTabledata",
 			value: function handleTabledata(tabledata) {
-				var _this = this;
+				var _this2 = this;
 
 				var config = this.config;
 				var arrGroup = config.data.groupby;
@@ -244,14 +260,13 @@ return /******/ (function(modules) { // webpackBootstrap
 						tabledata.reverse();
 					}
 				});
-				console.log("table data:", tabledata);
 
 				var arrT = [];
 				var length_group = arrGroup.length; //分组层数
 				if (length_group === 1) {
-					var obj_total = _Util2.default.groupBy(tabledata, arrBind[0].value);
+					var obj_total = _Util2.default.groupBy(tabledata, arrGroup[0]);
 					//console.log("rewrite", Object.keys(obj_total)); //to-do rewrite
-					//console.log(obj_total);
+					console.log(obj_total);
 					for (var group in obj_total) {
 						var obj_group = obj_total[group];
 						var size_group = obj_group.length;
@@ -259,19 +274,22 @@ return /******/ (function(modules) { // webpackBootstrap
 						for (var i = 0; i < size_group; i++) {
 							var temparr = [];
 							if (index_group === 0) {
+								var bind = arrBind[0];
+								var cell = obj_group[0];
 								temparr.push({
-									"value": group,
+									"value": this.parseValue(cell, bind.parser, bind.value),
 									"rowspan": size_group
 								});
 							} else {
 								temparr.push(null);
 							}
 							for (var _index_group = length_group; _index_group < arrBind.length; _index_group++) {
-								var cell = obj_group[i];
+								var _cell = obj_group[i];
 								var column = arrBind[_index_group];
 								temparr.push({
 									//"value": obj_group[i][arrBind[index_group]],
-									"value": this.parseValue(cell, column.parser, column.value)
+									"value": this.parseValue(_cell, column.parser, column.value),
+									renderParams: this.parseParams(_cell, column.renderParams, column)
 								});
 							}
 							index_group++;
@@ -279,9 +297,9 @@ return /******/ (function(modules) { // webpackBootstrap
 						}
 					}
 				} else if (length_group === 2) {
-					var _obj_total = _Util2.default.groupBy(tabledata, arrBind[0].value);
+					var _obj_total = _Util2.default.groupBy(tabledata, arrGroup[0]);
 					for (var _group in _obj_total) {
-						_obj_total[_group] = _Util2.default.groupBy(_obj_total[_group], arrBind[1].value);
+						_obj_total[_group] = _Util2.default.groupBy(_obj_total[_group], arrGroup[1]);
 					}
 					for (var x in _obj_total) {
 						var list_first = _obj_total[x];
@@ -298,11 +316,11 @@ return /******/ (function(modules) { // webpackBootstrap
 								var _temparr = [];
 								var row = list_second[_i];
 								if (index_first === 0) {
-									var _cell = {
+									var _cell2 = {
 										"value": x,
 										"rowspan": size_second_total
 									};
-									_temparr.push(_cell);
+									_temparr.push(_cell2);
 								} else {
 									_temparr.push(null);
 								}
@@ -320,11 +338,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        	"value": row[arrBind[index_group]]
 	        });*/
 
-									var _cell2 = row;
+									var _cell3 = row;
 									var _column = arrBind[_index_group2];
 									_temparr.push({
 										//"value": obj_group[i][arrBind[index_group]],
-										"value": this.parseValue(_cell2, _column.parser, _column.value)
+										"value": this.parseValue(_cell3, _column.parser, _column.value),
+										renderParams: this.parseParams(_cell3, _column.renderParams, _column)
 									});
 								}
 								index_first++;
@@ -345,7 +364,8 @@ return /******/ (function(modules) { // webpackBootstrap
 							var column = bind;
 							arrList.push({
 								//"value": obj_group[i][arrBind[index_group]],
-								"value": _this.parseValue(cell, column.parser, column.value)
+								"value": _this2.parseValue(cell, column.parser, column.value),
+								"renderParams": _this2.parseParams(cell, column.renderParams, column)
 							});
 						});
 						arrT.push(arrList);
@@ -361,75 +381,162 @@ return /******/ (function(modules) { // webpackBootstrap
 			}
 		}, {
 			key: "getVerticalTable",
-			value: function getVerticalTable(headergrid, footgrid, arrTableData, table, tabledata, globaldata) {
-				var _this2 = this;
+			value: function getVerticalTable(headergrid, footgrid, arrTableData, table, tabledata, globaldata, dataBind) {
+				var _this3 = this;
 
 				var generateEle = this.generateEle;
 				var head = generateEle("thead");
 				var body = generateEle("tbody");
 				var foot = generateEle("tfoot");
+
+				var dataSheet = {}; //for export
+				dataSheet.content = [];
+				dataSheet.merge = [];
 				//generate head
-				headergrid.map(function (row) {
+				headergrid.map(function (row, rowindex) {
 					var tr = generateEle("tr");
-					row.map(function (cell) {
+					var datasheetrow = [];
+					row.map(function (cell, colindex) {
 						if (cell) {
 							var th = generateEle("th");
 							// th.innerHTML = cell.value;
-							_DisplayUtil2.default.appendChild(th, _this2.parseValue(globaldata, "string", cell.title));
-							th.colSpan = cell.colspan || "1";
-							th.rowSpan = cell.rowspan || "1";
+							_DisplayUtil2.default.appendChild(th, _this3.parseValue(globaldata, "string", cell.title));
+							var colspan = parseInt(cell.colspan || 1);
+							var rowspan = parseInt(cell.rowspan || 1);
+							th.colSpan = colspan;
+							th.rowSpan = rowspan;
 							th.className = "headcell";
+							if (cell.sort) {
+								var that = _this3;
+								th.onclick = function () {
+									console.log(this);
+									var currentsort = "desc";
+									if (that.config.data.sortby.length > 0) {
+										currentsort = that.config.data.sortby[0].order;
+									}
+									if (currentsort == "desc") {
+										currentsort = "asc";
+									} else {
+										currentsort = "desc";
+									}
+									if (currentsort == "desc") {
+										that.sorticon.className = "anticon anticon-caret-down";
+									} else {
+										that.sorticon.className = "anticon anticon-caret-up";
+									}
+									that.config.data.sortby[0] = { "field": cell.sort, "order": currentsort };
+									that.reDraw();
+								};
+								var sortdir = "desc";
+								if (_this3.config.data.sortby.length > 0) {
+									sortdir = _this3.config.data.sortby[0].order;
+								}
+								var icon = document.createElement("i");
+								if (sortdir == "desc") {
+									icon.className = "anticon anticon-caret-down";
+								} else {
+									icon.className = "anticon anticon-caret-up";
+								}
+								icon.style.marginLeft = "6px";
+								icon.style.color = "#999";
+
+								_this3.sorticon = icon;
+								th.appendChild(icon);
+							}
+
 							tr.appendChild(th);
+
+							datasheetrow.push(th.innerText);
+							if (colspan > 1 || rowspan > 1) {
+								var merge = {};
+								merge.start = parseInt(rowindex + 1) + ":" + parseInt(colindex + 1);
+								merge.end = parseInt(rowindex + rowspan) + ":" + parseInt(colindex + colspan);
+								dataSheet.merge.push(merge);
+							}
+						} else {
+							datasheetrow.push("");
 						}
 					});
+					dataSheet.content.push(datasheetrow);
 					head.appendChild(tr);
 				});
-				var column = headergrid.slice(-1);
+				var column = dataBind;
 				//generate body
-				arrTableData.map(function (row) {
+				arrTableData.map(function (row, rowindex) {
 					var tr = generateEle("tr");
-					row.map(function (cell, i) {
-						//console.log(i);
+					var datasheetrow = [];
+					row.map(function (cell, colindex) {
 						if (cell) {
 							var td = generateEle("td");
-							td.colSpan = cell.colspan || "1";
-							td.rowSpan = cell.rowspan || "1";
+							var colspan = parseInt(cell.colspan || 1);
+							var rowspan = parseInt(cell.rowspan || 1);
+							td.colSpan = colspan;
+							td.rowSpan = rowspan;
 							td.className = "bodycell";
-							_DisplayUtil2.default.appendChild(td, _this2.renderValue(cell.value, column[i] ? column[i].render : ""));
+							var i = colindex;
+							_DisplayUtil2.default.appendChild(td, _this3.renderValue(cell.value, cell.renderParams, column[i]));
 							tr.appendChild(td);
+
+							datasheetrow.push(td.innerText);
+							if (colspan > 1 || rowspan > 1) {
+								var merge = {};
+								merge.start = parseInt(headergrid.length + rowindex + 1) + ":" + parseInt(colindex + 1);
+								merge.end = parseInt(headergrid.length + rowindex + rowspan) + ":" + parseInt(colindex + colspan);
+								dataSheet.merge.push(merge);
+							}
+						} else {
+							datasheetrow.push("");
 						}
 					});
+					dataSheet.content.push(datasheetrow);
 					body.appendChild(tr);
 				});
 				//generate foot
-				footgrid.map(function (row) {
+				footgrid.map(function (row, rowindex) {
 					var tr = generateEle("tr");
-					row.map(function (cell) {
+					var datasheetrow = [];
+					row.map(function (cell, colindex) {
 						if (cell) {
 							var td = generateEle("td");
 							if (cell.title) {
-								_DisplayUtil2.default.appendChild(td, _this2.parseValue(globaldata, "string", cell.title));
+								_DisplayUtil2.default.appendChild(td, _this3.parseValue(globaldata, "string", cell.title));
 							} else {
-								_DisplayUtil2.default.appendChild(td, _this2.parseMultiValue(tabledata, cell.parser, cell.value, cell.params));
+								_DisplayUtil2.default.appendChild(td, _this3.parseMultiValue(tabledata, cell.parser, cell.value, cell.params));
 							}
 							td.className = "footcell";
-							td.colSpan = cell.colspan || "1";
-							td.rowSpan = cell.rowspan || "1";
+							var colspan = parseInt(cell.colspan || 1);
+							var rowspan = parseInt(cell.rowspan || 1);
+							td.colSpan = colspan;
+							td.rowSpan = rowspan;
 							tr.appendChild(td);
+
+							datasheetrow.push(td.innerText);
+							if (colspan > 1 || rowspan > 1) {
+								var merge = {};
+								merge.start = parseInt(headergrid.length + arrTableData.length + rowindex + 1) + ":" + parseInt(colindex + 1);
+								merge.end = parseInt(headergrid.length + arrTableData.length + rowindex + rowspan) + ":" + parseInt(colindex + colspan);
+								dataSheet.merge.push(merge);
+							}
+						} else {
+							datasheetrow.push("");
 						}
 					});
+					dataSheet.content.push(datasheetrow);
 					foot.appendChild(tr);
 				});
 				table.appendChild(head);
 				table.appendChild(body);
 				table.appendChild(foot);
 
+				console.log("sheet:", dataSheet);
+				this.exportsheet = dataSheet;
+
 				return table;
 			}
 		}, {
 			key: "getHorizontalTable",
-			value: function getHorizontalTable(headergrid, footgrid, arrTableData, table, tabledata) {
-				var _this3 = this;
+			value: function getHorizontalTable(headergrid, footgrid, arrTableData, table, tabledata, globaldata, dataBind) {
+				var _this4 = this;
 
 				var config = this.config;
 				var headLength = config.data.groupby.length + 1; //表头高度
@@ -439,52 +546,91 @@ return /******/ (function(modules) { // webpackBootstrap
 				var body = generateEle("tbody");
 				var index_head = 0;
 
+				var dataSheet = {}; //for export
+				dataSheet.content = [];
+				dataSheet.merge = [];
+
 				var _loop = function _loop(i) {
 					var tr = generateEle("tr");
-					headergrid.map(function (node) {
+					var datasheetrow = [];
+					headergrid.map(function (node, colindex) {
 						var cell = node[i];
 						if (cell) {
 							var td = generateEle("td");
-							td.rowSpan = cell.colspan || "1";
-							td.colSpan = cell.rowspan || "1";
+							var colspan = parseInt(cell.rowspan || 1);
+							var rowspan = parseInt(cell.colspan || 1);
+							td.colSpan = colspan;
+							td.rowSpan = rowspan;
 							td.className = "headcell";
-							_DisplayUtil2.default.appendChild(td, _this3.parseValue(globaldata, "string", cell.title));
+							_DisplayUtil2.default.appendChild(td, _this4.parseValue(globaldata, "string", cell.title));
 							tr.appendChild(td);
+							datasheetrow.push(td.innerText);
+							if (colspan > 1 || rowspan > 1) {
+								var merge = {};
+								merge.start = parseInt(i + 1) + ":" + parseInt(colindex + 1);
+								merge.end = parseInt(i + rowspan) + ":" + parseInt(colindex + colspan);
+								dataSheet.merge.push(merge);
+							}
+						} else {
+							datasheetrow.push("");
 						}
 					});
 
-					var column = headergrid.slice(-1);
-					arrTableData.map(function (node) {
+					var column = dataBind;
+					arrTableData.map(function (node, colindex) {
 						var cell = node[i];
 						if (cell) {
-							console.log(cell);
 							var td = generateEle("td");
 							// td.innerHTML = cell.value;
-							_DisplayUtil2.default.appendChild(td, _this3.renderValue(cell.value, column[i] ? column[i].render : ""));
+							_DisplayUtil2.default.appendChild(td, _this4.renderValue(cell.value, cell.renderParams, column[i]));
 							//DisplayUtil.appendChild(td, cell.value);
-							td.colSpan = cell.rowspan || "1";
-							td.rowSpan = cell.colspan || "1";
+							var colspan = parseInt(cell.rowspan || 1);
+							var rowspan = parseInt(cell.colspan || 1);
+							td.colSpan = colspan;
+							td.rowSpan = rowspan;
 							td.className = "bodycell";
 							tr.appendChild(td);
+
+							datasheetrow.push(td.innerText);
+							if (colspan > 1 || rowspan > 1) {
+								var merge = {};
+								merge.start = parseInt(i + 1) + ":" + parseInt(headergrid.length + colindex + 1);
+								merge.end = parseInt(i + rowspan) + ":" + parseInt(headergrid.length + colindex + colspan);
+								dataSheet.merge.push(merge);
+							}
+						} else {
+							datasheetrow.push("");
 						}
 					});
 
 					//transform foot
-					footgrid.map(function (node) {
+					footgrid.map(function (node, colindex) {
 						var cell = node[i];
 						if (cell) {
 							var td = generateEle("td");
-							td.rowSpan = cell.colspan || "1";
-							td.colSpan = cell.rowspan || "1";
+							var colspan = parseInt(cell.rowspan || 1);
+							var rowspan = parseInt(cell.colspan || 1);
+							td.colSpan = colspan;
+							td.rowSpan = rowspan;
 							td.className = "footcell";
 							// td.innerHTML = cell.value || "";
 							if (cell.title) {
-								_DisplayUtil2.default.appendChild(td, _this3.parseValue(globaldata, "string", cell.title));
+								_DisplayUtil2.default.appendChild(td, _this4.parseValue(globaldata, "string", cell.title));
 							} else {
-								_DisplayUtil2.default.appendChild(td, _this3.parseMultiValue(tabledata, cell.parser, cell.value, cell.params));
+								_DisplayUtil2.default.appendChild(td, _this4.parseMultiValue(tabledata, cell.parser, cell.value, cell.params));
 							}
 							//DisplayUtil.appendChild(td, cell.value || "");
 							tr.appendChild(td);
+
+							datasheetrow.push(td.innerText);
+							if (colspan > 1 || rowspan > 1) {
+								var merge = {};
+								merge.start = parseInt(i + 1) + ":" + parseInt(headergrid.length + arrTableData.length + colindex + 1);
+								merge.end = parseInt(i + rowspan) + ":" + parseInt(headergrid.length + arrTableData + colindex + colspan);
+								dataSheet.merge.push(merge);
+							}
+						} else {
+							datasheetrow.push("");
 						}
 					});
 
@@ -494,6 +640,8 @@ return /******/ (function(modules) { // webpackBootstrap
 					} else {
 						body.appendChild(tr);
 					}
+
+					dataSheet.content.push(datasheetrow);
 				};
 
 				for (var i = 0; i < rowLength; i++) {
@@ -501,6 +649,8 @@ return /******/ (function(modules) { // webpackBootstrap
 				}
 				table.appendChild(head);
 				table.appendChild(body);
+				console.log("sheet:", dataSheet);
+				this.exportsheet = dataSheet;
 				return table;
 			}
 		}, {
@@ -512,7 +662,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 				var tabledata = config.data.response.data;
 				var length_data = config.menus.pager.pager_length || 0; //页长为空或零则显示所有数据
-				//to-do 考虑服务器端分页还是本地分页
 				if (config.menus.pager.enable && length_data != 0) {
 					var currentPage = config.menus.pager.current_page;
 					var start = currentPage * length_data;
@@ -526,9 +675,10 @@ return /******/ (function(modules) { // webpackBootstrap
 				var footgrid = config.table.footer;
 				var direction = config.style.direction;
 
+				var data_bind = config.table.header.data_bind;
 				var ele_table = this.generateEle("table");
-
-				ele_table = direction === "vertical" ? this.getVerticalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata) : this.getHorizontalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata);
+				//direction = "x";
+				ele_table = direction === "vertical" ? this.getVerticalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata, data_bind) : this.getHorizontalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata, data_bind);
 
 				ele_table.setAttribute("dt-id", "table");
 				ele_table.className = this.config.style.class_name;
@@ -547,12 +697,12 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: "renderMenuBar",
 			value: function renderMenuBar() {
-				var _this4 = this;
+				var _this5 = this;
 
 				if (!this.dom.menubar) {
 					(function () {
-						var menuconfig = _this4.config.menus;
-						var generateEle = _this4.generateEle;
+						var menuconfig = _this5.config.menus;
+						var generateEle = _this5.generateEle;
 						var menuContainer = generateEle("div");
 						//choose list items
 						if (menuconfig.pager.enable) {
@@ -569,7 +719,7 @@ return /******/ (function(modules) { // webpackBootstrap
 									itemOption.innerHTML = arrSelectName[i];
 									itemSelector.appendChild(itemOption);
 								}
-								var pagerLength = _this4.config.menus.pager.pager_length;
+								var pagerLength = _this5.config.menus.pager.pager_length;
 								if (pagerLength) {
 									itemSelector.value = pagerLength;
 								}
@@ -577,7 +727,7 @@ return /******/ (function(modules) { // webpackBootstrap
 									this.config.menus.pager.pager_length = itemSelector.value;
 									this.config.menus.pager.current_page = 0;
 									this.reDraw();
-								}.bind(_this4);
+								}.bind(_this5);
 								var char_display = generateEle("span");
 								char_display.innerHTML = "显示";
 								var char_items = generateEle("span");
@@ -590,42 +740,51 @@ return /******/ (function(modules) { // webpackBootstrap
 						}
 
 						if (menuconfig.export.enable) {
-							(function () {
-								var btn_export = generateEle("button");
-								btn_export.innerHTML = menuconfig.export.buttonname;
-								var filename = menuconfig.export.filename;
-								btn_export.onclick = function () {
-									//console.log(params);
-									var params = {
-										"dom": this.dom.table.innerHTML,
-										"filename": filename
-									};
-									var form = generateEle("form");
-									form.action = this.config.menus.export.export_url;
-									form.method = "post";
-									form.target = "_blank";
+							var btn_export = generateEle("button");
+							btn_export.innerHTML = menuconfig.export.buttonname;
+							var filename = menuconfig.export.filename;
+							btn_export.onclick = function () {
+								//console.log(params);
+								/*let params = {
+	       	"dom": this.dom.table.innerHTML,
+	       	"filename": filename
+	       };*/
+								var exporttable = {
+									type: "table",
+									data: this.exportsheet.content
+								};
+								if (this.exportsheet.merge.length > 0) {
+									exporttable.merge = this.exportsheet.merge;
+								}
+								var params = {
+									"filename": "test",
+									"content": JSON.stringify([exporttable])
+								};
+								var form = generateEle("form");
+								form.action = this.config.menus.export.export_url;
+								form.method = "post";
+								form.target = "_blank";
 
-									for (var key in params) {
-										var input = generateEle("input");
-										input.type = "hidden";
-										input.name = key;
-										input.value = params[key];
-										form.appendChild(input);
-									}
-									document.body.appendChild(form);
-									form.submit();
-									//生成下载连接后删除iframe节点
-									setTimeout(function () {
-										document.body.removeChild(form);
-									}, 100);
-								}.bind(_this4);
-								menuContainer.appendChild(btn_export);
-							})();
+								for (var key in params) {
+									var input = generateEle("input");
+									input.type = "hidden";
+									input.name = key;
+									input.value = params[key];
+									form.appendChild(input);
+								}
+								document.body.appendChild(form);
+								form.submit();
+								//生成下载连接后删除iframe节点
+								setTimeout(function () {
+									document.body.removeChild(form);
+								}, 100);
+							}.bind(_this5);
+							menuContainer.appendChild(btn_export);
 						}
 						menuContainer.style.marginBottom = "10px";
 
-						_this4.dom.menubar = menuContainer;
-						_this4.targetdom.appendChild(_this4.dom.menubar);
+						_this5.dom.menubar = menuContainer;
+						_this5.targetdom.appendChild(_this5.dom.menubar);
 					})();
 				}
 			}
@@ -649,7 +808,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: "renderPaginationBar",
 			value: function renderPaginationBar() {
-				var _this5 = this;
+				var _this6 = this;
 
 				var flag_pager = this.config.menus.pager.enable;
 				var length_page = this.config.menus.pager.pager_length || 0;
@@ -671,16 +830,16 @@ return /******/ (function(modules) { // webpackBootstrap
 					span_pagehint.style.marginLeft = "30px";
 
 					btn_pagination_left.onclick = function (e) {
-						if (_this5.config.menus.pager.current_page <= 0) {} else {
-							_this5.config.menus.pager.current_page--;
-							_this5.reDraw();
+						if (_this6.config.menus.pager.current_page <= 0) {} else {
+							_this6.config.menus.pager.current_page--;
+							_this6.reDraw();
 						}
 					};
 
 					btn_pagination_right.onclick = function (e) {
-						if (_this5.config.menus.pager.current_page + 1 >= Math.ceil(_this5.config.data.response.records_total / length_page)) {} else {
-							_this5.config.menus.pager.current_page++;
-							_this5.reDraw();
+						if (_this6.config.menus.pager.current_page + 1 >= Math.ceil(_this6.config.data.response.records_total / length_page)) {} else {
+							_this6.config.menus.pager.current_page++;
+							_this6.reDraw();
 						}
 					};
 
@@ -699,23 +858,25 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				} else {
 					var _targetnode = this.getTargetNodeById("paginationbar");
-					this.targetdom.removeChild(_targetnode);
+					if (_targetnode) {
+						this.targetdom.removeChild(_targetnode);
+					}
 				}
 			}
 		}, {
 			key: "renderFreezeHeader",
 			value: function renderFreezeHeader() {
-				var _this6 = this;
+				var _this7 = this;
 
-				if (document.getElementById("maskTable")) {
-					document.body.removeChild(document.getElementById("maskTable"));
-				}
+				/*if (document.getElementById("maskTable")) {
+	   	document.body.removeChild(document.getElementById("maskTable"));
+	   }*/
 				if (this.config.menus.freezeheader.enable) {
 					(function () {
 						var arrWidth = [];
-						var arrTargetDom = _this6.targetdom.childNodes;
-						var arrTargetKeys = Object.keys(arrTargetDom);
-						var targetTable = _this6.getTargetNodeById("table");
+						var arrTargetDom = _this7.targetdom.childNodes;
+						//let arrTargetKeys = Object.keys(arrTargetDom);
+						var targetTable = _this7.getTargetNodeById("table");
 
 						var tableWidth = targetTable.offsetWidth;
 						var tableOffsetLeft = targetTable.offsetLeft + document.body.scrollLeft;
@@ -734,10 +895,10 @@ return /******/ (function(modules) { // webpackBootstrap
 							arrWidth.push(arrTempWidth); //获取表头每列的宽度
 						});
 
-						var generateEle = _this6.generateEle;
+						var generateEle = _this7.generateEle;
 						var maskTable = generateEle("table");
-						maskTable.className = _this6.config.style.class_name;
-						var headergrid = _this6.config.table.header.grid;
+						maskTable.className = _this7.config.style.class_name;
+						var headergrid = _this7.config.table.header.grid;
 						var head = generateEle("thead");
 						headergrid.forEach(function (row, index, array) {
 							var tr = generateEle("tr");
@@ -746,7 +907,7 @@ return /******/ (function(modules) { // webpackBootstrap
 								if (cell) {
 									//get cells in every head row
 									var th = generateEle("th");
-									_DisplayUtil2.default.appendChild(th, _this6.parseValue(_this6.globaldata, "string", cell.title));
+									_DisplayUtil2.default.appendChild(th, _this7.parseValue(_this7.globaldata, "string", cell.title));
 									th.className = "headcell";
 									th.colSpan = cell.colspan || "1";
 									th.rowSpan = cell.rowspan || "1";
@@ -758,7 +919,7 @@ return /******/ (function(modules) { // webpackBootstrap
 							head.appendChild(tr);
 						});
 
-						_this6.$bindEventListener("scroll", function () {
+						_this7.$bindEventListener("scroll", function () {
 							var scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
 
 							//get HeaderHeight
@@ -768,8 +929,8 @@ return /******/ (function(modules) { // webpackBootstrap
 								maskTable.style.display = "none";
 							}
 						});
-						_this6.$bindEventListener("resize", function () {
-							return _this6.renderFreezeHeader();
+						_this7.$bindEventListener("resize", function () {
+							return _this7.renderFreezeHeader();
 						});
 
 						maskTable.appendChild(head);
@@ -779,16 +940,23 @@ return /******/ (function(modules) { // webpackBootstrap
 						maskTable.style.zIndex = "10000";
 						maskTable.style.backgroundColor = "white";
 						maskTable.style.width = tableWidth + "px";
-						maskTable.id = "maskTable";
+						//maskTable.id = "maskTable";
 						maskTable.style.display = "none";
-						document.body.appendChild(maskTable);
+						//document.body.appendChild(maskTable);
+						if (!_this7.maskTable) {
+							_this7.maskTable = maskTable;
+							document.body.appendChild(_this7.maskTable);
+						} else {
+							document.body.replaceChild(_this7.maskTable, maskTable);
+							_this7.maskTable = maskTable;
+						}
 					})();
 				}
 			}
 		}, {
 			key: "getData",
 			value: function getData(callback) {
-				var _this7 = this;
+				var _this8 = this;
 
 				var datapath = this.config.data.request.url;
 				var params = this.config.data.request.params;
@@ -804,9 +972,9 @@ return /******/ (function(modules) { // webpackBootstrap
 					}).then(function (response) {
 						return response.json();
 					}).then(function (responsedata) {
-						_this7.config.data.response = responsedata;
-						_this7.config.menus.pager.current_page = responsedata.current_page;
-						_this7.config.menus.pager.total_page = Math.ceil(responsedata.records_total / pagerconfig.pager_length);
+						_this8.config.data.response = responsedata;
+						_this8.config.menus.pager.current_page = responsedata.current_page;
+						_this8.config.menus.pager.total_page = Math.ceil(responsedata.records_total / pagerconfig.pager_length);
 						callback();
 					});
 				} else if (!this.config.data.response.data) {
@@ -815,8 +983,8 @@ return /******/ (function(modules) { // webpackBootstrap
 					}).then(function (response) {
 						return response.json();
 					}).then(function (responsedata) {
-						_this7.config.data.response = responsedata;
-						_this7.config.menus.pager.total_page = Math.ceil(responsedata.data.length / pagerconfig.pager_length);
+						_this8.config.data.response = responsedata;
+						_this8.config.menus.pager.total_page = Math.ceil(responsedata.data.length / pagerconfig.pager_length);
 						callback();
 					});
 				} else {
@@ -826,14 +994,14 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: "generateReport",
 			value: function generateReport() {
-				var _this8 = this;
+				var _this9 = this;
 
 				this.dom = this.dom || {};
 				this.renderMenuBar(); //render Menus
 				this.getData(function () {
-					_this8.renderTable(); //renderTable
-					_this8.renderPaginationBar(); //render pagination
-					_this8.renderFreezeHeader(); //freeze header
+					_this9.renderTable(); //renderTable
+					_this9.renderPaginationBar(); //render pagination
+					_this9.renderFreezeHeader(); //freeze header
 				});
 			}
 		}, {
@@ -943,7 +1111,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				"enable": true,
 				"buttonname": "导出Excel",
 				"filename": "export",
-				"export_url": "http://10.82.12.10:4000/exportexcel/"
+				"export_url": "http://10.82.12.10:808/exportexcel/Report.php"
 			},
 			"freezeheader": {
 				"enable": false,
@@ -1080,7 +1248,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var support = {
 	    blob: 'FileReader' in self && 'Blob' in self && (function() {
 	      try {
-	        new Blob();
+	        new Blob()
 	        return true
 	      } catch(e) {
 	        return false
@@ -1237,7 +1405,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  function headers(xhr) {
 	    var head = new Headers()
-	    var pairs = xhr.getAllResponseHeaders().trim().split('\n')
+	    var pairs = (xhr.getAllResponseHeaders() || '').trim().split('\n')
 	    pairs.forEach(function(header) {
 	      var split = header.trim().split(':')
 	      var key = split.shift().trim()
@@ -1290,9 +1458,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return new Response(null, {status: status, headers: {location: url}})
 	  }
 
-	  self.Headers = Headers;
-	  self.Request = Request;
-	  self.Response = Response;
+	  self.Headers = Headers
+	  self.Request = Request
+	  self.Response = Response
 
 	  self.fetch = function(input, init) {
 	    return new Promise(function(resolve, reject) {
@@ -1315,7 +1483,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          return xhr.getResponseHeader('X-Request-URL')
 	        }
 
-	        return;
+	        return
 	      }
 
 	      xhr.onload = function() {
@@ -1330,11 +1498,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	          headers: headers(xhr),
 	          url: responseURL()
 	        }
-	        var body = 'response' in xhr ? xhr.response : xhr.responseText;
+	        var body = 'response' in xhr ? xhr.response : xhr.responseText
 	        resolve(new Response(body, options))
 	      }
 
 	      xhr.onerror = function() {
+	        reject(new TypeError('Network request failed'))
+	      }
+
+	      xhr.ontimeout = function() {
 	        reject(new TypeError('Network request failed'))
 	      }
 
@@ -1588,7 +1760,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _createClass(_class, [{
 	        key: 'createElement',
 
-
 	        /**
 	         * 创建DOM操作 供子类覆盖
 	         * @returns {Element}
@@ -1609,7 +1780,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        /**
 	         * 如何渲染DOM 供子类覆盖
 	         */
-	        value: function render() {}
+	        value: function render() {
+	            this.element;
+	        }
 	    }, {
 	        key: 'data',
 
@@ -1637,6 +1810,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	        ,
 	        get: function get() {
 	            return this._data;
+	        }
+	    }, {
+	        key: 'params',
+	        set: function set(v) {
+	            if (_ObjectUtil2.default.isEqual(this._params, v)) {
+	                return;
+	            }
+	            this._params = v;
+	            this.render();
+	        }
+
+	        /**
+	         * 获取数据
+	         * @returns {*}
+	         */
+	        ,
+	        get: function get() {
+	            return this._params;
 	        }
 	    }, {
 	        key: 'element',
@@ -1782,6 +1973,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 	var _ItemRender2 = __webpack_require__(8);
 
 	var _ItemRender3 = _interopRequireDefault(_ItemRender2);
@@ -1809,16 +2002,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var container = document.createElement("div");
 	            this.progress = document.createElement("div");
 	            this.progress.style.background = "#f90";
+	            container.style.width = "100%";
 	            container.appendChild(this.progress);
 	            return container;
 	        }
 	    }, {
 	        key: "render",
 	        value: function render() {
-	            this.element.style.width = "100%";
-	            var value = this.data / 10;
+	            _get(Object.getPrototypeOf(_class.prototype), "render", this).call(this);
 	            this.progress.innerText = this.data;
-	            this.progress.style.width = value * 100 + "%";
+	            if (this.params) {
+	                var value = this.data / this.params[0];
+	                if (value > 1) value = 1;
+	                this.progress.style.width = value * 100 + "%";
+	            }
 	        }
 	    }]);
 
@@ -1929,7 +2126,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        key: "render",
 	        value: function render() {
 	            this.element.innerText = this.data;
-	            this.element.href = location.href + "#" + this.data;
+	            if (this.params) {
+	                this.element.href = this.params[0];
+	            }
 	        }
 	    }]);
 
@@ -2248,7 +2447,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	// module
-	exports.push([module.id, ".dctable td, .dctable th{\r\n    /*border-left: 1px solid #e9e9e9;\r\n    border-top: 1px solid #e9e9e9;*/\r\n    word-break: break-all;\r\n    height: 50px;\r\n    text-align: center;\r\n    padding: 0;\r\n    margin: 0;\r\n    border:1px solid black;\r\n}\r\n.dctable{\r\n    border-collapse: collapse;\r\n    border-spacing: 0;\r\n    /*border-right: 1px solid #e9e9e9;\r\n    border-bottom: 1px solid #e9e9e9;*/\r\n    width: 100%;\r\n    max-width: 100%;\r\n    /*border-radius: 6px 6px 0 0;*/\r\n    white-space: nowrap;\r\n    overflow: hidden;\r\n    border:1px solid black;\r\n}\r\n.table-header, .group-header{\r\n    font-size: 16px;\r\n    text-align: center;\r\n}\r\n.table-header{\r\n    font-weight: bold;\r\n    background: #f4f4f4;\r\n}\r\n.group-header{\r\n\r\n}", ""]);
+	exports.push([module.id, ".dctable td, .dctable th{\r\n    /*border-left: 1px solid #e9e9e9;\r\n    border-top: 1px solid #e9e9e9;*/\r\n    word-break: break-all;\r\n    height: 50px;\r\n    text-align: center;\r\n    padding: 0 12px;\r\n    margin: 0;\r\n    border:1px solid #e9e9e9;\r\n}\r\n.dctable{\r\n    border-collapse: collapse;\r\n    border-spacing: 0;\r\n    /*border-right: 1px solid #e9e9e9;\r\n    border-bottom: 1px solid #e9e9e9;*/\r\n    width: 100%;\r\n    max-width: 100%;\r\n    /*border-radius: 6px 6px 0 0;*/\r\n    white-space: nowrap;\r\n    overflow: hidden;\r\n    border:1px solid black;\r\n}\r\n.table-header, .group-header{\r\n    font-size: 16px;\r\n    text-align: center;\r\n}\r\n.table-header{\r\n    font-weight: bold;\r\n    background: #f4f4f4;\r\n}\r\n.group-header{\r\n\r\n}\r\n.headcell{\r\n    background: #f4f4f4;\r\n}", ""]);
 
 	// exports
 

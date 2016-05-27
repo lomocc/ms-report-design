@@ -32,13 +32,26 @@ export default class BaseTransform {
 	mapMultiParser(parserClass, type = "default") {
 		this.multiParserInjector.inject(parserClass, type);
 	}
-	renderValue(value, type) {
+
+	renderValue(value, renderParams, dataBind) {
+		var type = dataBind ? dataBind.render || dataBind.renderer : "default";
 		const RendererClass = this.rendererInjector.retrieve(type) || this.rendererInjector.retrieve("default");
 		const renderer = new RendererClass();
 		renderer.data = value;
+		renderer.params = renderParams;
 		return renderer.element;
 	}
 
+	parseParams(context, paramsExpStr) {
+		if(paramsExpStr){
+			var paramsExp = paramsExpStr.split(",");
+			return paramsExp.map((expression)=> {
+				if (expression != '') {
+					return this.parseValue(context, "string", expression);
+				}
+			});
+		}
+	}
 	parseValue(context, type, expression) {
 		let ParserClass = this.parserInjector.retrieve(type) || this.parserInjector.retrieve("default");
 		let parser = new ParserClass();
@@ -83,9 +96,9 @@ export default class BaseTransform {
 		let arrT = [];
 		let length_group = arrGroup.length; //分组层数
 		if (length_group === 1) {
-			let obj_total = util.groupBy(tabledata, arrBind[0].value);
+			let obj_total = util.groupBy(tabledata, arrGroup[0]);
 			//console.log("rewrite", Object.keys(obj_total)); //to-do rewrite
-			//console.log(obj_total);
+			console.log(obj_total);
 			for (let group in obj_total) {
 				let obj_group = obj_total[group];
 				let size_group = obj_group.length;
@@ -93,8 +106,10 @@ export default class BaseTransform {
 				for (let i = 0; i < size_group; i++) {
 					let temparr = [];
 					if (index_group === 0) {
+						let bind = arrBind[0];
+						let cell = obj_group[0];
 						temparr.push({
-							"value": group,
+							"value": this.parseValue(cell, bind.parser, bind.value),
 							"rowspan": size_group
 						});
 					} else {
@@ -105,8 +120,10 @@ export default class BaseTransform {
 						let column = arrBind[index_group];
 						temparr.push({
 							//"value": obj_group[i][arrBind[index_group]],
-							"value": this.parseValue(cell, column.parser, column.value)
+							"value": this.parseValue(cell, column.parser, column.value),
+							renderParams:this.parseParams(cell, column.renderParams, column)
 						});
+
 					}
 					index_group++;
 					arrT.push(temparr);
@@ -114,9 +131,9 @@ export default class BaseTransform {
 
 			}
 		} else if (length_group === 2) {
-			let obj_total = util.groupBy(tabledata, arrBind[0].value);
+			let obj_total = util.groupBy(tabledata, arrGroup[0]);
 			for (let group in obj_total) {
-				obj_total[group] = util.groupBy(obj_total[group], arrBind[1].value);
+				obj_total[group] = util.groupBy(obj_total[group], arrGroup[1]);
 			}
 			for (let x in obj_total) {
 				let list_first = obj_total[x];
@@ -159,7 +176,8 @@ export default class BaseTransform {
 							let column = arrBind[index_group];
 							temparr.push({
 								//"value": obj_group[i][arrBind[index_group]],
-								"value": this.parseValue(cell, column.parser, column.value)
+								"value": this.parseValue(cell, column.parser, column.value),
+								renderParams:this.parseParams(cell, column.renderParams, column)
 							});
 						}
 						index_first++;
@@ -181,7 +199,8 @@ export default class BaseTransform {
 					let column = bind;
 					arrList.push({
 						//"value": obj_group[i][arrBind[index_group]],
-						"value": this.parseValue(cell, column.parser, column.value)
+						"value": this.parseValue(cell, column.parser, column.value),
+						"renderParams":this.parseParams(cell, column.renderParams, column)
 					});
 				});
 				arrT.push(arrList);
@@ -195,7 +214,7 @@ export default class BaseTransform {
 		return document.createElement(name);
 	}
 
-	getVerticalTable(headergrid, footgrid, arrTableData, table, tabledata, globaldata) {
+	getVerticalTable(headergrid, footgrid, arrTableData, table, tabledata, globaldata, dataBind) {
 		let generateEle = this.generateEle;
 		let head = generateEle("thead");
 		let body = generateEle("tbody");
@@ -218,9 +237,48 @@ export default class BaseTransform {
 					th.colSpan = colspan;
 					th.rowSpan = rowspan;
 					th.className = "headcell";
+					if(cell.sort){
+						var that = this;
+						th.onclick = function(){
+							console.log(this);
+							let currentsort = "desc";
+							if(that.config.data.sortby.length>0){
+								currentsort = that.config.data.sortby[0].order;
+							}
+							if(currentsort == "desc"){
+								currentsort = "asc";
+							}else {
+								currentsort = "desc"
+							}
+							if(currentsort == "desc"){
+								that.sorticon.className = "anticon anticon-caret-down";
+							}else {
+								that.sorticon.className = "anticon anticon-caret-up";
+							}
+							that.config.data.sortby[0] = {"field":cell.sort,"order":currentsort};
+							that.reDraw();
+
+						}
+						let sortdir = "desc";
+						if(this.config.data.sortby.length>0){
+							sortdir = this.config.data.sortby[0].order;
+						}
+						var icon = document.createElement("i");
+						if(sortdir == "desc"){
+							icon.className = "anticon anticon-caret-down";
+						}else {
+							icon.className = "anticon anticon-caret-up";
+						}
+						icon.style.marginLeft = "6px";
+						icon.style.color = "#999"
+
+						this.sorticon = icon;
+						th.appendChild(icon);
+					}
+
 					tr.appendChild(th);
 
-					datasheetrow.push(th.innerHTML);
+					datasheetrow.push(th.innerText);
 					if(colspan >1 || rowspan>1){
 						let merge = {};
 						merge.start = parseInt(rowindex + 1) + ":" + parseInt(colindex+1);
@@ -234,7 +292,7 @@ export default class BaseTransform {
 			dataSheet.content.push(datasheetrow);
 			head.appendChild(tr);
 		});
-		const column = headergrid.slice(-1);
+		const column = dataBind;
 		//generate body
 		arrTableData.map((row,rowindex) => {
 			let tr = generateEle("tr");
@@ -247,12 +305,13 @@ export default class BaseTransform {
 					td.colSpan = colspan;
 					td.rowSpan = rowspan;
 					td.className = "bodycell";
+					var i = colindex;
 					DisplayUtil.appendChild(td,
-						this.renderValue(cell.value, column[colindex] ? column[colindex].render : "")
+						this.renderValue(cell.value, cell.renderParams, column[i])
 					);
 					tr.appendChild(td);
 
-					datasheetrow.push(td.innerHTML);
+					datasheetrow.push(td.innerText);
 					if(colspan >1 || rowspan>1){
 						let merge = {};
 						merge.start = parseInt(headergrid.length + rowindex + 1) + ":" + parseInt(colindex+1);
@@ -285,7 +344,7 @@ export default class BaseTransform {
 					td.rowSpan = rowspan;
 					tr.appendChild(td);
 
-					datasheetrow.push(td.innerHTML);
+					datasheetrow.push(td.innerText);
 					if(colspan >1 || rowspan>1){
 						let merge = {};
 						merge.start = parseInt(headergrid.length + arrTableData.length + rowindex + 1) + ":" + parseInt(colindex+1);
@@ -310,7 +369,7 @@ export default class BaseTransform {
 		return table;
 	}
 
-	getHorizontalTable(headergrid, footgrid, arrTableData, table, tabledata, globaldata) {
+	getHorizontalTable(headergrid, footgrid, arrTableData, table, tabledata, globaldata, dataBind) {
 		let config = this.config;
 		let headLength = config.data.groupby.length + 1; //表头高度
 		let rowLength = config.table.header.data_bind.length; //列数即横向扩展行数
@@ -337,7 +396,7 @@ export default class BaseTransform {
 					td.className = "headcell";
 					DisplayUtil.appendChild(td, this.parseValue(globaldata, "string", cell.title));
 					tr.appendChild(td);
-					datasheetrow.push(td.innerHTML);
+					datasheetrow.push(td.innerText);
 					if(colspan >1 || rowspan>1){
 						let merge = {};
 						merge.start = parseInt(i + 1) + ":" + parseInt(colindex+1);
@@ -349,14 +408,14 @@ export default class BaseTransform {
 				}
 			});
 
-			const column = headergrid.slice(-1);
+			const column = dataBind;
 			arrTableData.map((node,colindex) => {
 				let cell = node[i];
 				if (cell) {
 					let td = generateEle("td");
 					// td.innerHTML = cell.value;
 					DisplayUtil.appendChild(td,
-						this.renderValue(cell.value, column[i] ? column[i].render : "")
+						this.renderValue(cell.value, cell.renderParams, column[i])
 					);
 					//DisplayUtil.appendChild(td, cell.value);
 					let colspan = parseInt(cell.rowspan || 1);
@@ -366,7 +425,7 @@ export default class BaseTransform {
 					td.className = "bodycell";
 					tr.appendChild(td);
 
-					datasheetrow.push(td.innerHTML);
+					datasheetrow.push(td.innerText);
 					if(colspan >1 || rowspan>1){
 						let merge = {};
 						merge.start = parseInt(i + 1) + ":" + parseInt(headergrid.length+colindex+1);
@@ -397,7 +456,7 @@ export default class BaseTransform {
 					//DisplayUtil.appendChild(td, cell.value || "");
 					tr.appendChild(td);
 
-					datasheetrow.push(td.innerHTML);
+					datasheetrow.push(td.innerText);
 					if(colspan >1 || rowspan>1){
 						let merge = {};
 						merge.start = parseInt(i + 1) + ":" + parseInt(headergrid.length+arrTableData.length+colindex+1);
@@ -445,9 +504,10 @@ export default class BaseTransform {
 		let footgrid = config.table.footer;
 		let direction = config.style.direction;
 
+		let data_bind = config.table.header.data_bind;
 		let ele_table = this.generateEle("table");
 		//direction = "x";
-		ele_table = direction === "vertical" ? this.getVerticalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata) : this.getHorizontalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata);
+		ele_table = direction === "vertical" ? this.getVerticalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata, data_bind) : this.getHorizontalTable(headergrid, footgrid, arrTableData, ele_table, tabledata, globaldata, data_bind);
 
 		ele_table.setAttribute("dt-id", "table");
 		ele_table.className = this.config.style.class_name;

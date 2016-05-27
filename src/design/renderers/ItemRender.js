@@ -25,7 +25,21 @@ export default class {
     get data() {
         return this._data;
     }
+    set params(v) {
+        if (ObjectUtil.isEqual(this._params, v)) {
+            return;
+        }
+        this._params = v;
+        this.render();
+    }
 
+    /**
+     * 获取数据
+     * @returns {*}
+     */
+    get params() {
+        return this._params;
+    }
     /**
      * 创建DOM操作 供子类覆盖
      * @returns {Element}
@@ -46,5 +60,6 @@ export default class {
      * 如何渲染DOM 供子类覆盖
      */
     render() {
+        this.element;
     }
 }
