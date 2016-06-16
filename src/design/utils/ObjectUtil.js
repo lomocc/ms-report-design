@@ -1,5 +1,5 @@
 // Internal recursive comparison function for `isEqual`.
-export default class ObjectUtil{
+export default class ObjectUtil {
     static eq(a, b, aStack, bStack) {
         // Identical objects are equal. `0 === -0`, but they aren't identical.
         // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
@@ -44,7 +44,7 @@ export default class ObjectUtil{
         var aCtor = a.constructor, bCtor = b.constructor;
         if (
             aCtor !== bCtor &&
-                // Handle Object.create(x) cases
+            // Handle Object.create(x) cases
             'constructor' in a && 'constructor' in b && !(typeof aCtor == 'function' && aCtor instanceof aCtor &&
             typeof bCtor == 'function' && bCtor instanceof bCtor)
         ) {
@@ -84,7 +84,26 @@ export default class ObjectUtil{
         bStack.pop();
         return result;
     }
+
     static isEqual(a, b) {
         return ObjectUtil.eq(a, b, [], []);
+    }
+
+    // 拷贝对象
+    static deepCopy(obj) {
+        if (typeof obj == "object") {
+            if (obj === null) {
+                return null;
+            } else if (Array.isArray(obj)) {
+                return obj.map((v)=>ObjectUtil.deepCopy(v));
+            } else {
+                var newObj = {};
+                for (var k in obj)if (obj.hasOwnProperty(k)) {
+                    newObj[k] = ObjectUtil.deepCopy(obj[k]);
+                }
+                return newObj;
+            }
+        }
+        return obj;
     }
 }

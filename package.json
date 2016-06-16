@@ -1,11 +1,12 @@
 {
   "name": "ms-report-table",
-  "version": "1.0.9",
+  "version": "1.0.11",
   "description": "",
   "main": "build/main.js",
   "scripts": {
     "build": "set NODE_ENV=development && node server.js",
     "publishs": "webpack -p",
+    "publish": "npm publish",
     "test": "karma start"
   },
   "repository": {

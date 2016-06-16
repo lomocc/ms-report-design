@@ -8,7 +8,7 @@ export default class extends ParserObject {
 
         var expression = this.expression;
         if (/\$\{(\w+)\}/.test(expression)) {
-            expression = expression.replace(/\$\{(\w+)\}/g, (m, p)=> context[p] || 0);
+            expression = expression.replace(/\$\{(\w+)\}/g, (m, p)=> context[p] || '');
             return expression;
         } else if (context && context.hasOwnProperty(expression)) {
             return context[expression];
