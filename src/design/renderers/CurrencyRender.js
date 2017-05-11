@@ -4,10 +4,9 @@ import ItemRender from './ItemRender'
  */
 export default class extends ItemRender {
     formatCurrency() {
-        if (this.data) {
-            return this.data.replace(/(\d{1,3})(?=(?:\d{3})+(?!\d))/g, "$1,");
-        }
-        return '';
+		var num = parseFloat(this.data);
+		if(isNaN(num)) return "";
+        return num.toFixed(2).replace(/(\d{1,3})(?=(?:\d{3})+(?!\d))/g, "$1,");
     }
     createElement() {
         return this.formatCurrency();

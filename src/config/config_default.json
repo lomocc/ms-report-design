@@ -23,8 +23,8 @@
     "export":{
       "enable":true,
       "buttonname":"导出Excel",
-      "filename":"export",
-      "export_url":"http://10.82.12.10:808/exportexcel/Report.php"
+      "filename":"exportXX",
+      "export_url":"http://service.dc.msok.com:8580/exportexcel/Report.php"
     },
     "freezeheader":{
       "enable":false,

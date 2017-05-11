@@ -5,11 +5,12 @@ if (process.env.NODE_ENV == undefined)
     process.env.NODE_ENV = 'production';
 var config = {
     entry: [
-        // path.resolve("node_modules/babel-polyfill/lib/index.js"),
+        //path.resolve("node_modules/babel-polyfill/lib/index.js"),
+        //'babel-polyfill',
         path.resolve("src/index.js")
     ],
     output: {
-        path: path.resolve("build"),
+        path: path.resolve("dist"),
         filename: "[name].js",
         chunkFilename: "chunk.[name].js",
 		libraryTarget:"umd"

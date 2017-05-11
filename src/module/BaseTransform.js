@@ -1,8 +1,7 @@
 import config_default from "../config/config_default.json";
-//import dt from 'datatables';
-//dt(window, $);
-// import 'whatwg-fetch';
-//import axios from 'axios';
+//import 'whatwg-fetch';
+//import reqwest from 'reqwest';
+import axios from 'axios';
 
 import util from "./Util";
 import ObjectUtil from '../design/utils/ObjectUtil'
@@ -75,7 +74,7 @@ export default class BaseTransform {
         let parser = new ParserClass();
         parser.addChild(expression);
         multiParser.addChild(parser);
-        console.log(context, type, expression, multiParser.parse(context))
+        //console.log(context, type, expression, multiParser.parse(context))
         return multiParser.parse(context);
     }
 
@@ -191,6 +190,7 @@ export default class BaseTransform {
             }
         } else {
             //simple situation
+            //console.log("table data:", tabledata);
             tabledata.map((row) => {
                 let arrList = [];
                 arrBind.map((bind) => {
@@ -493,6 +493,7 @@ export default class BaseTransform {
             let currentPage = config.menus.pager.current_page;
             let start = currentPage * length_data;
             let end = (currentPage + 1) * length_data;
+            //console.log("table data:",tabledata);
             tabledata = tabledata.slice(start, end);
         }
         //format Data
@@ -511,26 +512,12 @@ export default class BaseTransform {
         let tableDiv = document.createElement("div");
         tableDiv.appendChild(ele_table);
         tableDiv.setAttribute("dt-id", "tableDiv");
-        //tableDiv.style.overflowX = "scroll";
         tableDiv.style.overflowX = "auto";
-        /*if (tableDiv.offsetWidth < ele_table.offsetWidth) {
-            tableDiv.style.overflowX = "scroll";
-        }*/
-        /*tableDiv.onmouseover = function () {
-            if (this.offsetWidth < ele_table.offsetWidth) {
-                this.style.overflowX = "scroll";
-            }
-        }
-        tableDiv.onmouseout = function () {
-            this.style.overflowX = "hidden";
-        }*/
         if (!this.dom.tableDiv) {//已存在table则append，否则替换
             this.dom.tableDiv = tableDiv;
             this.targetdom.appendChild(tableDiv);
         } else {
             this.dom.tableDiv = tableDiv;
-            // let arrTargetDom = this.targetdom.childNodes;
-            //let arrTargetKeys = Object.keys(arrTargetDom);
             let targetTableDiv = this.getTargetNodeById("tableDiv");
             this.targetdom.replaceChild(tableDiv, targetTableDiv);
         }
@@ -787,31 +774,32 @@ export default class BaseTransform {
      * 提供一个方法来设置内部使用什么ajax方法
      * @param ajaxFun ajaxFun(url:String, params:Object):Promise
      */
-    static injectAjax(ajaxFun){
+    static injectAjax(ajaxFun) {
         BaseTransform.$ajaxInject = ajaxFun;
     }
+
     static $ajaxInject = null;
+
+    injectAjax(ajaxFun) {
+        this.$ajaxInject = ajaxFun;
+    }
+
+    $ajaxInject = null;
     /**
      * 内部的ajax 使用 fetch
      * @param url
      * @param params
      * @returns {Promise.<TResult>|*}
      */
-    static $ajaxInternal(url, params){
-        return fetch(url, {
-            method: 'POST',
-            // headers: {
-            //     'Content-Type': 'application/json'
-            // },
-            body: JSON.stringify(params)
-        }).then((response) => {
-            return response.json();
-        });
+    static $ajaxDefault(url, params) {
+        return axios.post(url, params);
     }
-    $doAjax(url, params){
-        var ajaxFun = BaseTransform.$ajaxInject?BaseTransform.$ajaxInject:BaseTransform.$ajaxInternal;
+
+    $doAjax(url, params) {
+        var ajaxFun = this.$ajaxInject || BaseTransform.$ajaxInject || BaseTransform.$ajaxDefault;
         return ajaxFun(url, params);
     }
+
     getData(callback) {
         let datapath = this.config.data.request.url;
         let params = ObjectUtil.deepCopy(this.config.data.request.params);
@@ -827,8 +815,10 @@ export default class BaseTransform {
             params = util.mergeObject(params, params_pager);
         }
         //判断请求参数是否变化，如未变化则使用缓存数据，否则生成新的请求。
-        if (!this.config.data.response || !this.config.data.response.data || !ObjectUtil.isEqual(this.oldParams, params)) {
-            this.$doAjax(datapath, params).then((responsedata) => {
+        if (datapath && (!this.config.data.response || !this.config.data.response.data || !ObjectUtil.isEqual(this.oldParams, params))) {
+            this.$doAjax(datapath, params).then((response) => {
+                //console.log("response data:",responsedata);
+                let responsedata = response.data;
                 this.config.data.response = responsedata;
                 this.config.menus.pager.total_page = Math.ceil(responsedata.data.length / pagerconfig.pager_length);
                 if (flag_server_pager) {
@@ -837,7 +827,7 @@ export default class BaseTransform {
                 }
                 callback();
             });
-        } else {
+        } else if(this.config.data.response.data){
             callback();
         }
         this.oldParams = params;
@@ -886,16 +876,18 @@ export default class BaseTransform {
     // api
     setConfig(value) {
         // 防止重复setConfig
-        if(ObjectUtil.isEqual(this.$config, value))
+        if (ObjectUtil.isEqual(this.$config, value))
             return;
         this.$config = value;
         let default_config = ObjectUtil.deepCopy(config_default);
         this.config = util.mergeObject(default_config, this.$config);
     }
 
-    updateConfig(value){
+    updateConfig(value) {
         let current_config = JSON.parse(JSON.stringify(this.config));
         this.config = util.mergeObject(current_config, value);
+        this.config.menus.pager.current_page = 0;
+        this.reDraw();
     }
 
     // clear cache & memory & event listeners

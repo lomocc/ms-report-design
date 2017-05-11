@@ -1,7 +1,7 @@
 {
   "data": {
     "request": {
-      "url": "http://10.82.12.13:4000/table/usertrend",
+      "url": "http://10.82.12.10:3000/table/usertrend",
       "params": {"s":2}
     },
     "sortby": [{
@@ -20,7 +20,7 @@
       "current_page": 0
     },
     "export": {
-      "enable": false
+      "enable": true
     }
   },
   "style": {
